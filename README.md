@@ -1,6 +1,8 @@
 # mitsuba2lxd
 Launch an [LXD](https://linuxcontainers.org/) container with [Mitsuba2](https://github.com/mitsuba-renderer/mitsuba2) inside
 
+The following information is focused on the GPU script variant, since it is more complex to run. A CPU-only script is provided as well for reference.
+
 ## Introduction
 This script checks your LXD installation and launches a new [Ubuntu Minimal 20.04 Focal Fossa](https://cloud-images.ubuntu.com/minimal/releases/focal/release/) container.
 
@@ -20,7 +22,7 @@ This script is designed for Ubuntu/Debian. If you're interested to make it work 
 
 **Be aware that this script may lead to damaging your hardware, data loss or other issues. Please check its code before running it and watch its progress. Abort in case of any errors.** The license terms attached in this repository apply.
 
-Run the script `./mitsuba2lxd.sh` and wait for the setup to finish. It can take up to an hour.
+Run the script `./mitsuba2lxd-gpu.sh` and wait for the setup to finish. It can take up to an hour.
 
 ## Usage
 Once the container is ready, you can get in and use its shell using following shell command. Make sure to substitute `<container-name>` for the name of your Mitsuba2 container you selected right after starting the script.
