@@ -218,13 +218,6 @@ while [ $(ps aux | grep -i apt | wc -l) -gt 1 ] && [ $UpdateRetry -le $MaxUpdate
 	sleep 9
 done
 
-# select the variants
-if [ -f "$ConfigFile" ]; then
-	lxc exec $name -- sudo --login --user ubuntu 
-else
-	lxc exec $name -- sudo --login --user ubuntu 
-fi
-
 # Checkout the repository and copy the configuration file
 read -r -d '' GitClone << EOM
 	git clone --recursive https://github.com/mitsuba-renderer/mitsuba2;
