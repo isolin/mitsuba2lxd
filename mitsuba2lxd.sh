@@ -160,97 +160,107 @@ echo "$MitsubaProfile" | lxc profile edit mitsuba2
 ###########################
 
 lxc launch ubuntu-minimal:focal $name --profile default --profile mitsuba2
+# Wait for the container to update so that it does not interfere with the next step
+while [ $(ps aux | grep -i apt | wc -l) -gt 1 ] && [ $UpdateRetry -le $MaxUpdates ]; do
+	echo "Waiting for the container to finish updating before CUDA installation ..."
+	sleep 9
+done
 # this will make the shared folder accessible from inside of the container as well
 lxc config device add $name Shared disk source=$shared path=/home/ubuntu/Shared
-# Wait for the container to update so that it does not interfere with the next step
-UpdateRetry=1
-MaxUpdates=10
-while [ $(ps aux | grep -i apt | wc -l) -gt 1 ] && [ $UpdateRetry -le $MaxUpdates ]; do
-	echo "Waiting for the container to finish updating after launch (Retry $UpdateRetry/$MaxUpdates)"
-	UpdateRetry=$UpdateRetry + 1
-	sleep 12
-done
-
-if [ $UpdateRetry -gt $MaxUpdates ]; then
-	echo "Maxiumum number of update retries reached. Please try again, possibly setting a higher count of MaxUpdates."
-	exit
-fi
 
 ###########################
 # CONTAINER SETUP internal
 ###########################
 
-# basic Mitsuba installation requirement
-lxc exec $name -- sudo apt-get update
-lxc exec $name -- sudo /bin/sh -c "DEBIAN_FRONTEND=noninteractive apt-get install keyboard-configuration apt-utils"
-lxc exec $name -- sudo apt-get -y install clang-9 libc++-9-dev libc++abi-9-dev cmake ninja-build libz-dev libpng-dev libjpeg-dev libxrandr-dev libxinerama-dev libxcursor-dev python3-dev python3-distutils python3-setuptools 
-# some addional packages you will need
-lxc exec $name -- sudo /bin/sh -c "DEBIAN_FRONTEND=noninteractive apt-get -y install git software-properties-common gcc-8 g++-8 python3-sphinx python3-pip"
-# it looks like cmake of mitsuba needs pytest as well
-lxc exec $name -- sudo --login --user ubuntu sudo /usr/bin/python3.8 -m pip install pytest pytest-xdist
-
-# skipping packages necessary for HTML documentation
-
 # IMPORTANT unbind the graphics driver
 lxc stop $name
 lxc config set $name nvidia.runtime false
 lxc start $name
-# Wait for the container to update so that it does not interfere with the next step
-UpdateRetry=1
-MaxUpdates=10
-while [ $(ps aux | grep -i apt | wc -l) -gt 1 ] && [ $UpdateRetry -le $MaxUpdates ]; do
-	echo "Waiting for the container to finish updating before CUDA installation (Retry $UpdateRetry/$MaxUpdates)"
-	UpdateRetry=$UpdateRetry + 1
-	sleep 12
-done
 sleep 9
+# Wait for the container to update so that it does not interfere with the next step
+while [ $(ps aux | grep -i apt | wc -l) -gt 1 ] && [ $UpdateRetry -le $MaxUpdates ]; do
+	echo "Waiting for the container to finish updating before CUDA installation ..."
+	sleep 9
+done
+
+# basic Mitsuba installation requirements and a few other handy packages
+read -r -d '' BasicSetup << EOM
+	sudo apt-get update;
+	sudo apt-get -y install keyboard-configuration apt-utils;
+	sudo apt-get -y install git software-properties-common gcc-8 g++-8 python3-sphinx python3-pip;
+	sudo apt-get -y install clang-9 libc++-9-dev libc++abi-9-dev cmake ninja-build libz-dev libpng-dev libjpeg-dev libxrandr-dev libxinerama-dev libxcursor-dev python3-dev python3-distutils python3-setuptools;
+	/usr/bin/python3.8 -m pip install pytest pytest-xdist;
+EOM
+
+# skipping packages necessary for HTML documentation
 
 # standard CUDA installation
 #There is no 20.04 directory yet
-lxc exec $name -- wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin
-lxc exec $name -- sudo mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600
-lxc exec $name -- sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
-lxc exec $name -- sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /"
-lxc exec $name -- sudo apt-get update
-lxc exec $name -- sudo apt-get install cuda -y
-sleep 10
+read -r -d '' CudaSetup << EOM
+	wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin;
+	sudo mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600;
+	sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub;
+	sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /";
+	sudo apt-get update;
+	sudo apt-get -y install cuda;
+EOM
+
+lxc exec $name -- /bin/bash -c "$BasicSetup $CudaSetup"
 
 # IMPORTANT bind the graphics driver again
 lxc stop $name
 lxc config set $name nvidia.runtime true
 lxc start $name
+sleep 9
 # Wait for the container to update so that it does not interfere with the next step
-UpdateRetry=1
-MaxUpdates=10
 while [ $(ps aux | grep -i apt | wc -l) -gt 1 ] && [ $UpdateRetry -le $MaxUpdates ]; do
-	echo "Waiting for the container to finish updating after CUDA installation (Retry $UpdateRetry/$MaxUpdates)"
-	UpdateRetry=$UpdateRetry + 1
-	sleep 12
+	echo "Waiting for the container to finish updating after CUDA installation ..."
+	sleep 9
 done
-
-# OptiX installation
-lxc exec $name -- sudo --login --user ubuntu cp Shared/Setup/NVIDIA-OptiX-SDK-6.5.0-linux64.sh NVIDIA-OptiX-SDK-6.5.0-linux64.sh
-lxc exec $name -- sudo --login --user ubuntu chmod +x ./NVIDIA-OptiX-SDK-6.5.0-linux64.sh
-lxc exec $name -- sudo --login --user ubuntu /bin/sh -c "./NVIDIA-OptiX-SDK-6.5.0-linux64.sh --skip-license --include-subdir"
-
-# clone the Mitsuba repo
-lxc exec $name -- sudo --login --user ubuntu git clone --recursive https://github.com/mitsuba-renderer/mitsuba2
 
 # select the variants
 if [ -f "$ConfigFile" ]; then
-	lxc exec $name -- sudo --login --user ubuntu cp $ConfigFile mitsuba2/mitsuba.conf
+	lxc exec $name -- sudo --login --user ubuntu 
 else
-	lxc exec $name -- sudo --login --user ubuntu cp mitsuba2/resources/mitsuba.conf.template mitsuba2/mitsuba.conf
+	lxc exec $name -- sudo --login --user ubuntu 
 fi
 
+# Checkout the repository and copy the configuration file
+read -r -d '' GitClone << EOM
+	git clone --recursive https://github.com/mitsuba-renderer/mitsuba2;
+	if [ -f "Shared/Setup/mitsuba.conf" ]; then
+		cp Shared/Setup/mitsuba.conf mitsuba2/mitsuba.conf;
+	else
+		cp mitsuba2/resources/mitsuba.conf.template mitsuba2/mitsuba.conf;
+	fi
+EOM
+
+# OptiX installation
+read -r -d '' OptiXSetup << EOM
+	cp Shared/Setup/NVIDIA-OptiX-SDK-6.5.0-linux64.sh NVIDIA-OptiX-SDK-6.5.0-linux64.sh;
+	chmod +x ./NVIDIA-OptiX-SDK-6.5.0-linux64.sh;
+	./NVIDIA-OptiX-SDK-6.5.0-linux64.sh --skip-license --include-subdir;
+EOM
+
 # IMPORTANT prepare GCC for CUDA
-lxc exec $name -- sudo --login --user ubuntu sudo ln -s /usr/bin/gcc-8 /usr/local/cuda/bin/gcc
-lxc exec $name -- sudo --login --user ubuntu sudo ln -s /usr/bin/g++-8 /usr/local/cuda/bin/g++
+read -r -d '' GCCSetup << EOM
+	sudo ln -s /usr/bin/gcc-8 /usr/local/cuda/bin/gcc;
+	sudo ln -s /usr/bin/g++-8 /usr/local/cuda/bin/g++;
+EOM
 
 # continue with the Mitsuba installation
-lxc exec $name -- sudo --login --user ubuntu mkdir mitsuba2/build
-lxc exec $name -- sudo --login --user ubuntu /bin/sh -c "export CC=clang-9 && CXX=clang++-9 && CUDACXX=/usr/local/cuda/bin/nvcc && cd mitsuba2/build && cmake -GNinja .. -DMTS_OPTIX_PATH=/home/ubuntu/NVIDIA-OptiX-SDK-6.5.0-linux64"
-lxc exec $name -- sudo --login --user ubuntu /bin/sh -c "cd mitsuba2/build && ninja"
+read -r -d '' MitsubaBuild << EOM
+	mkdir mitsuba2/build;
+	export CC=clang-9;
+	export CXX=clang++-9;
+	export CUDACXX=/usr/local/cuda/bin/nvcc;
+	cd mitsuba2/build;
+	cmake -GNinja .. -DMTS_OPTIX_PATH=/home/ubuntu/NVIDIA-OptiX-SDK-6.5.0-linux64;
+	ninja;
+	
+	cd ..;
+	source setpath.sh;
+	sudo apt-get -y autoremove;
+EOM
 
-lxc exec $name -- sudo --login --user ubuntu /bin/sh -c "cd mitsuba2 && source setpath.sh"
-lxc exec $name -- sudo apt-get autoremove -y
+lxc exec $name -- sudo --login --user ubuntu /bin/bash -c "$GitClone $OptiXSetup $GCCSetup $MitsubaBuild"
