@@ -225,7 +225,7 @@ read -r -d '' GitClone << EOM
 		cp Shared/Setup/mitsuba.conf mitsuba2/mitsuba.conf;
 	else
 		cp mitsuba2/resources/mitsuba.conf.template mitsuba2/mitsuba.conf;
-	fi
+	fi;
 EOM
 
 # OptiX installation
