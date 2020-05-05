@@ -33,5 +33,5 @@ You can also execute mitsuba directly, e.g.
 lxc exec <container-name> -- sudo --login --user ubuntu mitsuba Shared/scene.xml -o Shared/scene.exr
 ```
 ## Acknowledgments
-Mitsuba2 was created by Wenzel Jakob. Significant features and/or improvements to the code were contributed by Merlin Nimier-David, Guillaume Loubet, Sébastien Speierer, Delio Vicini, and Tizian Zeltner. Great job!
+Mitsuba2 was created by Wenzel Jakob. Significant features and/or improvements to the code were contributed by Merlin Nimier-David, Guillaume Loubet, Sébastien Speierer, Delio Vicini, and Tizian Zeltner. Great job, thank you very much for you efforts!
 
