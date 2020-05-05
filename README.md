@@ -23,9 +23,15 @@ This script is designed for Ubuntu/Debian. If you're interested to make it work 
 Run the script `./mitsuba2lxd.sh` and wait for the setup to finish. It can take up to an hour.
 
 ## Usage
-Once the container is ready, you can get in using following shell command. Make sure to substitute `<container-name>` for the name of your Mitsuba2 container you selected right after starting the script.
+Once the container is ready, you can get in and use its shell using following shell command. Make sure to substitute `<container-name>` for the name of your Mitsuba2 container you selected right after starting the script.
 ```sh
 lxc exec <container-name> -- sudo --login --user ubuntu
 ```
+You can also execute mitsuba directly, e.g.
 
+```sh
+lxc exec <container-name> -- sudo --login --user ubuntu mitsuba Shared/scene.xml -o Shared/
+```
+## Acknowledgments
+Mitsuba2 was created by Wenzel Jakob. Significant features and/or improvements to the code were contributed by Merlin Nimier-David, Guillaume Loubet, Sébastien Speierer, Delio Vicini, and Tizian Zeltner. Great job!
 
