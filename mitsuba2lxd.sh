@@ -250,9 +250,8 @@ read -r -d '' MitsubaBuild << EOM
 	cd mitsuba2/build;
 	cmake -GNinja .. -DMTS_OPTIX_PATH=/home/ubuntu/NVIDIA-OptiX-SDK-6.5.0-linux64;
 	ninja;
-	
-	cd ..;
-	source setpath.sh;
+
+	echo 'source ~/mitsuba2/setpath.sh' >>~/.profile;
 	sudo apt-get -y autoremove;
 EOM
 
