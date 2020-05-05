@@ -213,7 +213,7 @@ lxc exec $name -- sudo apt-key adv --fetch-keys https://developer.download.nvidi
 lxc exec $name -- sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /"
 lxc exec $name -- sudo apt-get update
 lxc exec $name -- sudo apt-get install cuda -y
-lxc exec $name -- sudo apt-get autoremove -y
+sleep 10
 
 # IMPORTANT bind the graphics driver again
 lxc stop $name
@@ -251,3 +251,6 @@ lxc exec $name -- sudo --login --user ubuntu sudo ln -s /usr/bin/g++-8 /usr/loca
 lxc exec $name -- sudo --login --user ubuntu mkdir mitsuba2/build
 lxc exec $name -- sudo --login --user ubuntu /bin/sh -c "export CC=clang-9 && CXX=clang++-9 && CUDACXX=/usr/local/cuda/bin/nvcc && cd mitsuba2/build && cmake -GNinja .. -DMTS_OPTIX_PATH=/home/ubuntu/NVIDIA-OptiX-SDK-6.5.0-linux64"
 lxc exec $name -- sudo --login --user ubuntu /bin/sh -c "cd mitsuba2/build && ninja"
+
+lxc exec $name -- sudo --login --user ubuntu /bin/sh -c "cd mitsuba2 && source setpath.sh"
+lxc exec $name -- sudo apt-get autoremove -y
