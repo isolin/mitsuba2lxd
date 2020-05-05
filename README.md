@@ -32,6 +32,13 @@ You can also execute mitsuba directly, e.g.
 ```sh
 lxc exec <container-name> -- sudo --login --user ubuntu mitsuba Shared/scene.xml -o Shared/scene.exr
 ```
+
+## Troubleshooting
+* Various issues can occur during the installation. For example the container will be for sure get into a bad condition if internet connection drops during the setup process.
+* If you didn't notice any errors during the installation, you can still encounter minor problems. Here are a few general suggestions:
+1. Maybe the LXD just didn't start the container after the host rebooted. Check with `lxc list` if the container is running. If not, `lxc start <container-name>` does the job. LXD has a great and powerful CLI. Do not be afraid to dig deeper.
+2. Did you replace your GPU recently or upgraded the driver at the host? If yes, the easiest solution is to run the script again and create a new container. Make sure to move any files you want to keep to the shared folder before you choose to overwrite the old container.
+
 ## Acknowledgments
 Mitsuba2 was created by Wenzel Jakob. Significant features and/or improvements to the code were contributed by Merlin Nimier-David, Guillaume Loubet, Sébastien Speierer, Delio Vicini, and Tizian Zeltner. Great job, thank you very much for you efforts!
 
