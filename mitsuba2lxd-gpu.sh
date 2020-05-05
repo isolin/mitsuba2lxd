@@ -162,7 +162,7 @@ echo "$MitsubaProfile" | lxc profile edit mitsuba2
 lxc launch ubuntu-minimal:focal $name --profile default --profile mitsuba2
 # Wait for the container to update so that it does not interfere with the next step
 while [ $(ps aux | grep -i apt | wc -l) -gt 1 ] && [ $UpdateRetry -le $MaxUpdates ]; do
-	echo "Waiting for the container to finish updating before CUDA installation ..."
+	echo "Waiting for the container to finish updating after launch ..."
 	sleep 9
 done
 # this will make the shared folder accessible from inside of the container as well
