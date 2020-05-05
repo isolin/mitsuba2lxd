@@ -30,7 +30,7 @@ lxc exec <container-name> -- sudo --login --user ubuntu
 You can also execute mitsuba directly, e.g.
 
 ```sh
-lxc exec <container-name> -- sudo --login --user ubuntu mitsuba Shared/scene.xml -o Shared/
+lxc exec <container-name> -- sudo --login --user ubuntu mitsuba Shared/scene.xml -o Shared/scene.exr
 ```
 ## Acknowledgments
 Mitsuba2 was created by Wenzel Jakob. Significant features and/or improvements to the code were contributed by Merlin Nimier-David, Guillaume Loubet, Sébastien Speierer, Delio Vicini, and Tizian Zeltner. Great job!
